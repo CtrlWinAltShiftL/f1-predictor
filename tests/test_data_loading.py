@@ -47,3 +47,10 @@ def test_gained_lost():
     race = get_session(2025, "Spain", "R")
     race.load()
     assert fetcher.positions_gained_lost("1", race) == -7
+
+def test_prev_race():
+    fetcher = F1DataFetcher()
+    race = get_session(2025, "Australia", "R")
+    prev_race = fetcher.prev_race(race)
+    assert prev_race.event.EventName == "Abu Dhabi Grand Prix" # type: ignore
+    assert int(prev_race.event.EventDate.year) == 2024 # type: ignore

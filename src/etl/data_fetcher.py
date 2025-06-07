@@ -85,6 +85,21 @@ class F1DataFetcher():
 		driver_data['avg_track_temp'] = self.avg_track_temp(race)
 
 		return pd.Series(driver_data)
+	
+	def prev_race(self, race: Session) -> Session | None: # type: ignore
+		try:
+			current_race_number = int(race.event.RoundNumber)
+			current_year = race.event.EventDate.year
+			if current_race_number == 1 and self.config['ROLLING_OVER_SEASONS'] == True:
+				last_year = current_year - 1
+				last_year_event_schedule = get_event_schedule(last_year, include_testing=False)
+				last_race_name = last_year_event_schedule.iloc[-1]['EventName']
+				return get_session(last_year, last_race_name, "R")
+			else:
+				race_number = current_race_number - 1
+				return get_session(current_year, race_number, "R")
+		except:
+			return None
 
 	def rained(self, race: Session) -> bool | None:
 		try:
@@ -167,7 +182,7 @@ class F1DataFetcher():
 
 		for year in range(start_year, end_year+1): # type: ignore
 			for gp in get_event_schedule(year, include_testing=False):
-				gp_name = gp['EventName']
+				gp_name = gp['EventName'] # type: ignore
 				race = get_session(year, gp_name, "R")
 				quali = get_session(year, gp_name, "Q")
 				race.load()
