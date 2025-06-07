@@ -192,3 +192,7 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Ignore anything with 'scratch' in the name (files or folders)
+**/*scratch*/
+**/*scratch*
