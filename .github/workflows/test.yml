@@ -38,7 +38,7 @@ jobs:
 
       - name: Install dependencies with uv
         run: |
-          uv pip install -r pyproject.toml
+          uv sync
 
       - name: Run tests
         run: |
