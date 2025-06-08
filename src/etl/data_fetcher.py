@@ -124,7 +124,7 @@ class F1DataFetcher():
 
 		for i in race_range:
 			if i > min(race_range):
-				race = prev_race
+				race = prev_race # type: ignore
 			prev_race = self.prev_race(race, quali_mode=quali_mode)
 			prev_race.load() # type: ignore
 			rolling_race_window.append(prev_race)
