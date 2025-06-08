@@ -35,6 +35,9 @@ jobs:
         run: |
           python -c "import sys; print('\n'.join(sys.path))"
 
+      - name: Add src to PYTHONPATH
+        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/src" >> $GITHUB_ENV
+
       # Runs a single command using the runners shell
       - name: Set up Python
         uses: actions/setup-python@v5
