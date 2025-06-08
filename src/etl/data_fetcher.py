@@ -62,7 +62,14 @@ class F1DataFetcher():
 		
 		return list(set(driver_codes)) # Removes duplicates
 	
-	def load_driver_data(self, driver_number: str, race: Session, quali: Session, rolling_window: int = 5) -> pd.Series:
+	def load_driver_data(
+			self,
+			driver_number: str,
+			race: Session,
+			quali: Session,
+			rolling_race_window: list[Session],
+			rolling_quali_window: list[Session]
+			) -> pd.Series:
 
 		driver_data = {}
 
@@ -76,17 +83,23 @@ class F1DataFetcher():
 
 		# collect rolling aggregated data
 
-		# rolling_average_positions_gained_lost = self.rolling_average_positions_gained_lost(driver_number, race, rolling_window)
-		# rolling_average_team_points = self.rolling_average_team_points(driver_number, race, rolling_window)
-		# rolling_average_finish_position = self.rolling_average_finish_position(driver_number, race, rolling_window)
-		# rolling_average_quali_position = self.rolling_average_quali_position(driver_number, quali, rolling_window)
+		driver_data['rolling_average_positions_gained_lost'] = self.avg_positions_gained_lost(rolling_race_window, driver_number)
+		driver_data['rolling_average_team_points'] = self.avg_team_points(rolling_race_window, driver_number)
+		driver_data['rolling_average_finish_position'] = self.avg_finish_position(rolling_race_window, driver_number)
+		driver_data['rolling_average_quali_position'] = self.avg_quali_position(rolling_quali_window, driver_number)
 
 		driver_data['rained'] = self.rained(race)
 		driver_data['avg_track_temp'] = self.avg_track_temp(race)
 
+		driver_data['rolling_stats_window'] = self.config['STATS_ROLLING_WINDOW']
+
 		return pd.Series(driver_data)
 	
-	def prev_race(self, race: Session) -> Session | None: # type: ignore
+	def prev_race(self, race: Session, quali_mode: bool = False) -> Session | None: # type: ignore
+		mode = "R"
+		if quali_mode:
+			mode = "Q"
+		
 		try:
 			current_race_number = int(race.event.RoundNumber)
 			current_year = race.event.EventDate.year
@@ -94,12 +107,53 @@ class F1DataFetcher():
 				last_year = current_year - 1
 				last_year_event_schedule = get_event_schedule(last_year, include_testing=False)
 				last_race_name = last_year_event_schedule.iloc[-1]['EventName']
-				return get_session(last_year, last_race_name, "R")
+				return get_session(last_year, last_race_name, mode)
 			else:
 				race_number = current_race_number - 1
-				return get_session(current_year, race_number, "R")
+				return get_session(current_year, race_number, mode)
 		except:
 			return None
+		
+	def rolling_race_window(self, race: Session, inc_this_race: bool = False, quali_mode: bool = False) -> list[Session]:
+		if inc_this_race:
+			race_range = range(self.config['STATS_ROLLING_WINDOW'])
+		else:
+			race_range = range(1, self.config['STATS_ROLLING_WINDOW'] + 1)
+		
+		rolling_race_window = []
+
+		for i in race_range:
+			if i > min(race_range):
+				race = prev_race
+			prev_race = self.prev_race(race, quali_mode=quali_mode)
+			prev_race.load() # type: ignore
+			rolling_race_window.append(prev_race)
+
+		return rolling_race_window
+	
+	def avg_positions_gained_lost(self, rolling_race_window: list[Session], driver_number: str) -> float:
+		gained_lost = []
+		for race in rolling_race_window:
+			gained_lost.append(self.positions_gained_lost(driver_number, race))
+		return float(np.array(gained_lost).mean())
+
+	def avg_team_points(self, rolling_race_window: list[Session], driver_number: str) -> float:
+		team_pts = []
+		for race in rolling_race_window:
+			team_pts.append(self.team_points(driver_number, race))
+		return float(np.array(team_pts).mean())
+
+	def avg_finish_position(self, rolling_race_window: list[Session], driver_number: str) -> float:
+		position = []
+		for race in rolling_race_window:
+			position.append(self.finishing_position(driver_number, race))
+		return float(np.array(position).mean())
+	
+	def avg_quali_position(self, rolling_quali_window: list[Session], driver_number: str) -> float:
+		position = []
+		for quali in rolling_quali_window:
+			position.append(self.finishing_position(driver_number, quali))
+		return float(np.array(position).mean())
 
 	def rained(self, race: Session) -> bool | None:
 		try:
@@ -183,16 +237,30 @@ class F1DataFetcher():
 		for year in range(start_year, end_year+1): # type: ignore
 			for gp in get_event_schedule(year, include_testing=False):
 				gp_name = gp['EventName'] # type: ignore
+
 				race = get_session(year, gp_name, "R")
 				quali = get_session(year, gp_name, "Q")
 				race.load()
 				quali.load()
+
+				race_window = self.rolling_race_window(race)
+				quali_window = self.rolling_race_window(race, quali_mode=True)
+
 				for driver_number in race.drivers:
 					pass
 
 		return pd.DataFrame # type: ignore
 
+	def get_and_load_session(self, year: int, gp: str | int, identifier: int | str | None) -> Session:
+		session = get_session(year, gp, identifier=identifier)
+		session.load()
+		return session
+
 if __name__=='__main__':
 	fetcher = F1DataFetcher()
-	drivers = fetcher.get_drivers(2012, 2012)
-	print(drivers)
+	r = fetcher.get_and_load_session(2025, "Spain", "R")
+	q = fetcher.get_and_load_session(2025, "Spain", "Q")
+	rw = fetcher.rolling_race_window(r)
+	qw = fetcher.rolling_race_window(r, quali_mode=True)
+	driver_data = fetcher.load_driver_data("44", r, q, rw, qw)
+	pass
