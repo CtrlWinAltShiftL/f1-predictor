@@ -25,6 +25,16 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Print working directory
+        run: pwd
+
+      - name: List files
+        run: ls -R
+
+      - name: Print Python path
+        run: |
+          python -c "import sys; print('\n'.join(sys.path))"
+
       # Runs a single command using the runners shell
       - name: Set up Python
         uses: actions/setup-python@v5
