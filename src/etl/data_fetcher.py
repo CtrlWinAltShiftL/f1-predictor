@@ -113,21 +113,21 @@ class F1DataFetcher():
 				return get_session(current_year, race_number, mode)
 		except:
 			return None
-		
+
+	
 	def rolling_race_window(self, race: Session, inc_this_race: bool = False, quali_mode: bool = False) -> list[Session]:
-		if inc_this_race:
-			race_range = range(self.config['STATS_ROLLING_WINDOW'])
-		else:
-			race_range = range(1, self.config['STATS_ROLLING_WINDOW'] + 1)
-		
+		race_range = range(self.config['STATS_ROLLING_WINDOW'])
 		rolling_race_window = []
 
+		if inc_this_race:
+			rolling_race_window.append(race)
+			race_range = race_range[:-1]
+		
 		for i in race_range:
-			if i > min(race_range):
-				race = prev_race # type: ignore
 			prev_race = self.prev_race(race, quali_mode=quali_mode)
 			prev_race.load() # type: ignore
 			rolling_race_window.append(prev_race)
+			race = prev_race # type: ignore
 
 		return rolling_race_window
 	
