@@ -40,6 +40,10 @@ jobs:
         run: |
           uv sync
 
+      - name: Install your code
+        run: |
+          pip install -e .
+
       - name: Run tests
         run: |
           uv run pytest
