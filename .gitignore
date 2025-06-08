@@ -196,3 +196,5 @@ cython_debug/
 # Ignore anything with 'scratch' in the name (files or folders)
 **/*scratch*/
 **/*scratch*
+
+**/db/dbs
