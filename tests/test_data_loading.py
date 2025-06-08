@@ -47,3 +47,37 @@ def test_gained_lost():
     race = get_session(2025, "Spain", "R")
     race.load()
     assert fetcher.positions_gained_lost("1", race) == -7
+
+def test_prev_race():
+    fetcher = F1DataFetcher()
+    race = get_session(2025, "Australia", "R")
+    prev_race = fetcher.prev_race(race)
+    assert prev_race.event.EventName == "Abu Dhabi Grand Prix" # type: ignore
+    assert int(prev_race.event.EventDate.year) == 2024 # type: ignore
+
+def test_rolling_race_window_exclusive():
+    fetcher = F1DataFetcher()
+    race = get_session(2025, "Spain", "R")
+    race.load()
+    rolling_race_window_exclusive = fetcher.rolling_race_window(race)
+    assert rolling_race_window_exclusive[0].event.EventName == "Monaco Grand Prix" # Check they are the correct races
+    assert rolling_race_window_exclusive[4].event.EventName == "Bahrain Grand Prix"
+    assert rolling_race_window_exclusive[0].weather_data is not None # Check they have loaded
+    assert rolling_race_window_exclusive[4].weather_data is not None
+
+def test_rolling_race_window_inclusive():
+    fetcher = F1DataFetcher()
+    race = get_session(2025, "Spain", "R")
+    race.load()
+    rolling_race_window_inclusive = fetcher.rolling_race_window(race, inc_this_race = True)
+    assert rolling_race_window_inclusive[1].event.EventName == "Monaco Grand Prix" # Check they are the correct races
+    assert rolling_race_window_inclusive[4].event.EventName == "Saudi Arabian Grand Prix"
+    assert rolling_race_window_inclusive[1].weather_data is not None # Check they have loaded
+    assert rolling_race_window_inclusive[4].weather_data is not None
+
+def test_avg_positions_gained_lost():
+    fetcher = F1DataFetcher()
+    race = get_session(2025, "Spain", "R")
+    race.load()
+    rolling_race_window_exclusive = fetcher.rolling_race_window(race)
+    assert fetcher.avg_positions_gained_lost(rolling_race_window_exclusive, "81") == 0.4
