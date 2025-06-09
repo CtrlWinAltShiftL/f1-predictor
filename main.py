@@ -14,8 +14,11 @@ def load(
 		):
 
 	if clear_db:
-		sql.delete_all("f1_race_data")
-		sql.commit()
+		try:
+			sql.delete_all("f1_race_data")
+			sql.commit()
+		except:
+			print("⚠️ Error deleting table. Continuing...")
 
 	sql.create_table("f1_stats_schema.sql")
 

@@ -7,6 +7,7 @@ class SQLUtils():
 		self.base_dir = Path(__file__).parent
 		self.schema_dir = (self.base_dir / '..' / '..' / 'db' / 'schemas').resolve()
 		self.db_dir = (self.base_dir / '..' / '..' / 'db' / 'dbs').resolve()
+		self.db_dir.mkdir(parents=True, exist_ok=True)
 		self.execute_dir = (self.base_dir / '..' / '..' / 'db' / 'execute').resolve()
 		self.db_filename = db_filename
 		self.db_path = str((self.db_dir / db_filename).resolve())
