@@ -1,4 +1,5 @@
-YEAR_RANGE: [2018, 2025]
+YEAR_RANGE: [2019, 2025]
 STATS_ROLLING_WINDOW: 5
 RAINY_THRESHOLD: 0.3 # Needs to be raining 30% of the race to be classified as rainy
 ROLLING_OVER_SEASONS: True # Can rolling data be aggregated across seasons
+BATCH_SIZE: 10

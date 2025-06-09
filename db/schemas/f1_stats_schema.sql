@@ -1,5 +1,6 @@
-CREATE TABLE f1_race_data (
+CREATE TABLE IF NOT EXISTS f1_race_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    gp_year INTEGER NOT NULL,
     gp_name TEXT NOT NULL,
     driver_number TEXT NOT NULL,
     fastest_quali_lap REAL,

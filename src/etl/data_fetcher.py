@@ -3,6 +3,8 @@
 
 import pandas as pd
 import numpy as np
+import time
+
 from fastf1 import get_session, get_events_remaining, get_event_schedule
 from fastf1.core import Session
 from fastf1.ergast import Ergast
@@ -95,7 +97,7 @@ class F1DataFetcher():
 
 		return pd.Series(driver_data)
 	
-	def prev_race(self, race: Session, quali_mode: bool = False) -> Session | None: # type: ignore
+	def prev_race(self, race: Session, quali_mode: bool = False, attempt_number: int = 1) -> Session | None: # type: ignore
 		mode = "R"
 		if quali_mode:
 			mode = "Q"
@@ -111,8 +113,13 @@ class F1DataFetcher():
 			else:
 				race_number = current_race_number - 1
 				return get_session(current_year, race_number, mode)
-		except:
-			return None
+		except Exception as e:
+			print(f"\nCould not get last race, skipping. Error: {e}")
+			if attempt_number > 2:
+				return None
+			time.sleep(attempt_number)
+			attempt_number+=1
+			return self.prev_race(race, attempt_number=attempt_number)
 
 	
 	def rolling_race_window(self, race: Session, inc_this_race: bool = False, quali_mode: bool = False) -> list[Session]:
@@ -132,28 +139,40 @@ class F1DataFetcher():
 		return rolling_race_window
 	
 	def avg_positions_gained_lost(self, rolling_race_window: list[Session], driver_number: str) -> float:
-		gained_lost = []
-		for race in rolling_race_window:
-			gained_lost.append(self.positions_gained_lost(driver_number, race))
-		return float(np.array(gained_lost).mean())
+		try:
+			gained_lost = []
+			for race in rolling_race_window:
+				gained_lost.append(self.positions_gained_lost(driver_number, race))
+			return float(np.array(gained_lost).mean())
+		except:
+			return None
 
 	def avg_team_points(self, rolling_race_window: list[Session], driver_number: str) -> float:
-		team_pts = []
-		for race in rolling_race_window:
-			team_pts.append(self.team_points(driver_number, race))
-		return float(np.array(team_pts).mean())
+		try:
+			team_pts = []
+			for race in rolling_race_window:
+				team_pts.append(self.team_points(driver_number, race))
+			return float(np.array(team_pts).mean())
+		except:
+			return None
 
 	def avg_finish_position(self, rolling_race_window: list[Session], driver_number: str) -> float:
-		position = []
-		for race in rolling_race_window:
-			position.append(self.finishing_position(driver_number, race))
-		return float(np.array(position).mean())
+		try:
+			position = []
+			for race in rolling_race_window:
+				position.append(self.finishing_position(driver_number, race))
+			return float(np.array(position).mean())
+		except:
+			return None
 	
 	def avg_quali_position(self, rolling_quali_window: list[Session], driver_number: str) -> float:
-		position = []
-		for quali in rolling_quali_window:
-			position.append(self.finishing_position(driver_number, quali))
-		return float(np.array(position).mean())
+		try:
+			position = []
+			for quali in rolling_quali_window:
+				position.append(self.finishing_position(driver_number, quali))
+			return float(np.array(position).mean())
+		except:
+			return None
 
 	def rained(self, race: Session) -> bool | None:
 		try:
@@ -210,7 +229,10 @@ class F1DataFetcher():
 			return None
 
 	def interrogate_results_by_driver(self, race: Session, look_for: str, driver_number: str):
-		return race.results.loc[race.results["DriverNumber"] == driver_number, look_for].iloc[0]
+		try:
+			return race.results.loc[race.results["DriverNumber"] == driver_number, look_for].iloc[0]
+		except:
+			return None
 
 	def get_and_load_session(self, year: int, gp: str | int, identifier: int | str | None) -> Session:
 		session = get_session(year, gp, identifier=identifier)

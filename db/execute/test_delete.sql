@@ -1,0 +1,1 @@
+DELETE FROM f1_race_data WHERE gp_name = ?;

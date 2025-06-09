@@ -1,0 +1,1 @@
+INSERT INTO f1_race_data (gp_name, driver_number, finished_top_3) VALUES (?, ?, ?)

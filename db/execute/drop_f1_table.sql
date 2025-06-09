@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS f1_race_data;
