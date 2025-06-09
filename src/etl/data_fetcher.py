@@ -211,45 +211,6 @@ class F1DataFetcher():
 
 	def interrogate_results_by_driver(self, race: Session, look_for: str, driver_number: str):
 		return race.results.loc[race.results["DriverNumber"] == driver_number, look_for].iloc[0]
-	
-	def load(self, start_year: int | None = None, end_year: int | None = None) -> pd.DataFrame:
-
-		# For each year since start year
-			# For each gp in season
-				# For each driver in gp
-					# Get:
-					# - Fastest quali lap [x]
-					# - Team points this gp [x]
-					# - Driver finish this gp [x]
-					# - Driver quali position this gp [x]
-					# - Driver position delta this gp [x]
-					# - Driver position delta last x races [x]
-					# - Team avg points last x races [x]
-					# - Driver average finish last x races [x]
-					# - Driver average quali position last x races
-					# - weather conditions
-
-		if not start_year:
-			start_year = self.config['YEAR_RANGE'][0]
-		if not end_year:
-			end_year = self.config['YEAR_RANGE'][1]
-
-		for year in range(start_year, end_year+1): # type: ignore
-			for gp in get_event_schedule(year, include_testing=False):
-				gp_name = gp['EventName'] # type: ignore
-
-				race = get_session(year, gp_name, "R")
-				quali = get_session(year, gp_name, "Q")
-				race.load()
-				quali.load()
-
-				race_window = self.rolling_race_window(race)
-				quali_window = self.rolling_race_window(race, quali_mode=True)
-
-				for driver_number in race.drivers:
-					pass
-
-		return pd.DataFrame # type: ignore
 
 	def get_and_load_session(self, year: int, gp: str | int, identifier: int | str | None) -> Session:
 		session = get_session(year, gp, identifier=identifier)
