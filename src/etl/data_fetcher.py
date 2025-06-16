@@ -130,7 +130,7 @@ class F1DataFetcher():
 			rolling_race_window.append(race)
 			race_range = race_range[:-1]
 		
-		for i in race_range:
+		for _ in race_range:
 			prev_race = self.prev_race(race, quali_mode=quali_mode)
 			prev_race.load() # type: ignore
 			rolling_race_window.append(prev_race)
@@ -143,36 +143,40 @@ class F1DataFetcher():
 			gained_lost = []
 			for race in rolling_race_window:
 				gained_lost.append(self.positions_gained_lost(driver_number, race))
-			return float(np.array(gained_lost).mean())
+			gained_lost_trimmed = [x for x in gained_lost if x is not None]
+			return float(np.array(gained_lost_trimmed).mean())
 		except:
-			return None
+			return None # type: ignore
 
 	def avg_team_points(self, rolling_race_window: list[Session], driver_number: str) -> float:
 		try:
 			team_pts = []
 			for race in rolling_race_window:
 				team_pts.append(self.team_points(driver_number, race))
-			return float(np.array(team_pts).mean())
+			team_pts_trimmed = [x for x in team_pts if x is not None]
+			return float(np.array(team_pts_trimmed).mean())
 		except:
-			return None
+			return None # type: ignore
 
 	def avg_finish_position(self, rolling_race_window: list[Session], driver_number: str) -> float:
 		try:
 			position = []
 			for race in rolling_race_window:
 				position.append(self.finishing_position(driver_number, race))
-			return float(np.array(position).mean())
+			avg_finish_trimmed = [x for x in position if x is not None]
+			return float(np.array(avg_finish_trimmed).mean())
 		except:
-			return None
+			return None # type: ignore
 	
 	def avg_quali_position(self, rolling_quali_window: list[Session], driver_number: str) -> float:
 		try:
 			position = []
 			for quali in rolling_quali_window:
 				position.append(self.finishing_position(driver_number, quali))
-			return float(np.array(position).mean())
+			avg_quali_trimmed = [x for x in position if x is not None]
+			return float(np.array(avg_quali_trimmed).mean())
 		except:
-			return None
+			return None # type: ignore
 
 	def rained(self, race: Session) -> bool | None:
 		try:
@@ -203,13 +207,16 @@ class F1DataFetcher():
 		
 	def finishing_position(self, driver_number: str, race: Session) -> int | None:
 		try:
-			return int(self.interrogate_results_by_driver(race, "Position", driver_number))
+			return int(self.interrogate_results_by_driver(race, "Position", driver_number)) # type: ignore
 		except:
 			return None
 		
 	def starting_position(self, driver_number: str, race: Session) -> int | None:
 		try:
-			return int(self.interrogate_results_by_driver(race, "GridPosition", driver_number))
+			starting_position = int(self.interrogate_results_by_driver(race, "GridPosition", driver_number)) # type: ignore
+			if starting_position == 0:
+				return 20
+			return starting_position
 		except:
 			return None
 		
@@ -241,9 +248,12 @@ class F1DataFetcher():
 
 if __name__=='__main__':
 	fetcher = F1DataFetcher()
-	r = fetcher.get_and_load_session(2025, "Spain", "R")
-	q = fetcher.get_and_load_session(2025, "Spain", "Q")
-	rw = fetcher.rolling_race_window(r)
-	qw = fetcher.rolling_race_window(r, quali_mode=True)
-	driver_data = fetcher.load_driver_data("44", r, q, rw, qw)
+	r = fetcher.get_and_load_session(2019, "Belgium", "R")
+	dn = "88"
+	# q = fetcher.get_and_load_session(2019, "Belgium", "Q")
+	# rw = fetcher.rolling_race_window(r)
+	# qw = fetcher.rolling_race_window(r, quali_mode=True)
+	# driver_data = fetcher.load_driver_data("88", r, q, rw, qw)
+	gp = r.results.loc[r.results["DriverNumber"] == dn, "GridPosition"]
+	res = fetcher.positions_gained_lost("44", r)
 	pass
